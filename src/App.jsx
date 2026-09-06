@@ -28,11 +28,137 @@ import {
 } from "lucide-react";
 
 import "./App.css";
+const stateData = {
+    Meghalaya: {
+      districts: {
+        Sohra: {
+          risk: "HIGH",
+          score: 87,
+          rainfall: 182,
+          soilMoisture: 78,
+          status: "Warning",
+        },
+        Shillong: {
+          risk: "MEDIUM",
+          score: 58,
+          rainfall: 82,
+          soilMoisture: 59,
+          status: "Watch",
+        },
+        "East Khasi Hills": {
+          risk: "MEDIUM",
+          score: 64,
+          rainfall: 96,
+          soilMoisture: 61,
+          status: "Watch",
+        },
+      },
+    },
+
+    Assam: {
+      districts: {
+        Guwahati: {
+          risk: "LOW",
+          score: 31,
+          rainfall: 42,
+          soilMoisture: 38,
+          status: "Safe",
+        },
+        "Dima Hasao" : {
+          risk: "HIGH",
+          score: 76,
+          rainfall: 145,
+          soilMoisture: 72,
+          status: "Warning",
+        },
+      },
+    },
+
+    "Arunachal Pradesh": {
+      districts: {
+        Itanagar: {
+          risk: "HIGH",
+          score: 79,
+          rainfall: 156,
+          soilMoisture: 73,
+          status: "Warning",
+        },
+        Tawang: {
+          risk: "MEDIUM",
+          score: 62,
+          rainfall: 91,
+          soilMoisture: 64,
+          status: "Watch",
+        },
+      },
+  },
+
+  Sikkim: {
+    districts: {
+      Gangtok: {
+        risk: "MEDIUM",
+        score: 58,
+        rainfall: 78,
+        soilMoisture: 57,
+        status: "Watch",
+      },
+    },
+  },
+
+  Mizoram: {
+    districts: {
+      Aizawl: {
+        risk: "HIGH",
+        score: 81,
+        rainfall: 134,
+        soilMoisture: 71,
+        status: "Warning",
+      },
+    },
+  },
+
+  Nagaland: {
+    districts: {
+      Kohima: {
+        risk: "MEDIUM",
+        score: 55,
+        rainfall: 71,
+        soilMoisture: 54,
+        status: "Watch",
+      },
+    },
+  },
+
+  Tripura: {
+    districts: {
+      Agartala: {
+        risk: "LOW",
+        score: 27,
+        rainfall: 38,
+        soilMoisture: 35,
+        status: "Safe",
+      },
+    },
+  },
+};
+
 
 function App() {
   const [activePage, setActivePage] = useState("Home");
   const [mobileMenu, setMobileMenu] = useState(false);
   const [language, setLanguage] = useState("EN");
+  const [selectedDistrict, setSelectedDistrict] = useState("Sohra");
+  const [selectedState, setSelectedState] = useState("Meghalaya");
+  
+  const states = Object.keys(stateData);
+  const districts = Object.keys(stateData[selectedState].districts);
+  const currentDistrict = stateData[selectedState].districts[selectedDistrict];
+  
+  const handleStateChange = (state) => {
+    setSelectedState(state);
+    const firstDistrict = Object.keys(stateData[state].districts)[0];
+    setSelectedDistrict(firstDistrict);
+  };
 
   const navigation = [
     { name: "Home", icon: <Home size={19} /> },
@@ -41,6 +167,7 @@ function App() {
     { name: "Safe Route", icon: <Route size={19} /> },
     { name: "Report Landslide", icon: <Camera size={19} /> },
   ];
+  
 
   return (
     <div className="app">
@@ -89,29 +216,40 @@ function App() {
             <ChevronDown size={15} />
           </div>
 
-          <div className="state selected">
-            <MapPin size={15} />
-            <span>Meghalaya</span>
-          </div>
+          <div className="location-selector">
 
-          <div className="district">
-            <span>East Khasi Hills</span>
-          </div>
+              <label>State</label>
 
-          <div className="district">
-            <span>Sohra</span>
-          </div>
+              <select
+                value={selectedState}
+                onChange={(e) =>
+                  handleStateChange(e.target.value)
+                }
+              >
+                {states.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
 
-          <div className="state">
-            <MapPin size={15} />
-            <span>Assam</span>
-          </div>
+              <label>District</label>
 
-          <div className="state">
-            <MapPin size={15} />
-            <span>Arunachal Pradesh</span>
-          </div>
+              <select
+                value={selectedDistrict}
+                onChange={(e) =>
+                  setSelectedDistrict(e.target.value)
+                }
+              >
+                {districts.map((district) => (
+                  <option key={district} value={district}>
+                    {district}
+                  </option>
+                ))}
+              </select>
 
+          </div>
+                    
         </div>
 
         <div className="sidebar-bottom">
@@ -187,7 +325,11 @@ function App() {
         {/* PAGE */}
         <div className="content">
 
-          {activePage === "Home" && <HomePage />}
+          {activePage === "Home" && <HomePage
+          selectedState={selectedState}
+          selectedDistrict={selectedDistrict}
+          district={currentDistrict}
+        />}
 
           {activePage === "Risk Map" && <RiskMapPage />}
 
@@ -210,7 +352,12 @@ function App() {
    HOME PAGE
 ========================= */
 
-function HomePage() {
+function HomePage({
+  selectedState,
+  selectedDistrict,
+  district
+}) {
+  
 
   return (
     <>
@@ -243,10 +390,10 @@ function HomePage() {
           <div>
             <span className="card-label">CURRENT RISK</span>
 
-            <h2>HIGH RISK</h2>
+            <h2>{district.risk}</h2>
 
             <p>
-              Your location: <b>Sohra, Meghalaya</b>
+              Your location: <b>{district.name}, {district.state}</b>
             </p>
 
           </div>
@@ -257,7 +404,7 @@ function HomePage() {
         <MetricCard
           icon={<CloudRain />}
           title="Rainfall"
-          value="86 mm"
+          value={`${district.score} %`}
           description="Last 24 hours"
           status="High"
         />
@@ -265,7 +412,7 @@ function HomePage() {
         <MetricCard
           icon={<Droplets />}
           title="Soil Moisture"
-          value="71%"
+          value={`${district.soilMoisture} %`}
           description="Current level"
           status="High"
         />
@@ -296,7 +443,7 @@ function HomePage() {
 
       <div className="bottom-grid">
 
-        <AIRisk />
+        <AIRisk district={district} />
 
         <RiskTimeline />
 
@@ -367,8 +514,17 @@ function RiskMap() {
         </div>
 
         <div className="map-controls">
-          <button>Satellite</button>
-          <button className="selected-map">Terrain</button>
+          <div className="map-layers">
+            <label className="layer-option">
+              <input type="radio" name="mapType" value="satellite" />
+              <span>Satellite</span>
+            </label>
+
+            <label className="layer-option">
+              <input type="radio" name="mapType" value="terrain" />
+              <span>Terrain</span>
+            </label>
+          </div>
         </div>
 
       </div>
@@ -528,7 +684,7 @@ function LiveAlerts() {
    AI RISK
 ========================= */
 
-function AIRisk() {
+function AIRisk({district}) {
 
   return (
 
@@ -553,7 +709,7 @@ function AIRisk() {
         <div className="risk-score">
 
           <div className="score-circle">
-            <strong>82</strong>
+            <strong>{district.score}</strong>
             <span>/100</span>
           </div>
 

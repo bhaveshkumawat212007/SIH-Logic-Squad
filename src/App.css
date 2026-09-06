@@ -135,6 +135,37 @@ button {
   color: #b8d9d4;
 }
 
+.location-selector {
+  margin: 20px 0;
+}
+
+.location-selector label {
+  display: block;
+  font-size: 12px;
+  margin: 12px 0 6px;
+  opacity: 0.8;
+}
+
+.location-selector select {
+  width: 100%;
+  padding: 11px 12px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: #164e48;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+
+.location-selector select:hover {
+  background: #f1f5f4;
+}
+
+.location-selector select:focus {
+  box-shadow: 0 0 0 2px #5eead4;
+}
+
 .sidebar-bottom {
   margin-top: auto;
 }
@@ -443,6 +474,31 @@ button {
   border: 1px solid #dde7e4;
   border-radius: 6px;
   overflow: hidden;
+}
+
+.map-layers {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.layer-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.layer-option input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0f766e;
+}
+
+.layer-option span {
+  user-select: none;
 }
 
 .map-controls button {
