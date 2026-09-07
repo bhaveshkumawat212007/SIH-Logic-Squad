@@ -1,4 +1,13 @@
 import React, { useState } from "react";
+import "leaflet/dist/leaflet.css";
+
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup
+} from "react-leaflet";
+
 import {
   Home,
   Map,
@@ -213,7 +222,7 @@ function App() {
 
           <div className="region-title">
             <span>North East India</span>
-            <ChevronDown size={15} />
+            
           </div>
 
           <div className="location-selector">
@@ -254,24 +263,7 @@ function App() {
 
         <div className="sidebar-bottom">
 
-          <div className="languages">
-            <button className={language === "EN" ? "lang-active" : ""}
-              onClick={() => setLanguage("EN")}>
-              EN
-            </button>
-
-            <button className={language === "HI" ? "lang-active" : ""}
-              onClick={() => setLanguage("HI")}>
-              हिंदी
-            </button>
-
-            <button className={language === "AS" ? "lang-active" : ""}
-              onClick={() => setLanguage("AS")}>
-              অসমীয়া
-            </button>
-
-            <Languages size={16} />
-          </div>
+          
 
           <div className="system-status">
             <span className="online-dot"></span>
@@ -329,7 +321,8 @@ function App() {
           selectedState={selectedState}
           selectedDistrict={selectedDistrict}
           district={currentDistrict}
-        />}
+          setActivePage={setActivePage}
+          />}
 
           {activePage === "Risk Map" && <RiskMapPage />}
 
@@ -337,7 +330,8 @@ function App() {
 
           {activePage === "Safe Route" && <SafeRoutePage />}
 
-          {activePage === "Report Landslide" && <ReportPage />}
+          {activePage === "Report Landslide" && <ReportPage selectedState={selectedState}
+          selectedDistrict={selectedDistrict} />}
 
         </div>
 
@@ -355,9 +349,21 @@ function App() {
 function HomePage({
   selectedState,
   selectedDistrict,
-  district
+  district,
+  setActivePage
 }) {
-  
+  const hour = new Date().getHours();
+
+    let greeting;
+
+    if (hour < 12) {
+      greeting = "Good morning";
+    } else if (hour < 18) {
+      greeting = "Good afternoon";
+    } else {
+      greeting = "Good evening";
+    }
+      
 
   return (
     <>
@@ -365,7 +371,7 @@ function HomePage({
       <div className="page-header">
 
         <div>
-          <h1>Good afternoon 👋</h1>
+          <h1>{greeting} 👋</h1>
           <p>Here is the current landslide situation in your region.</p>
         </div>
 
@@ -432,7 +438,23 @@ function HomePage({
 
       <div className="dashboard-grid">
 
-        <RiskMap />
+        <div className="home-map-panel">
+          <div className="map-header">
+            <div>
+              <h3>Live Risk Map</h3>
+              <p>Landslide risk monitoring across Northeast India</p>
+            </div>
+
+            <button
+              className="view-map-btn"
+              onClick={() => setActivePage("risk-map")}
+            >
+              View Full Map
+            </button>
+          </div>
+
+          <RealRiskMap />
+        </div>
 
         <LiveAlerts />
 
@@ -863,33 +885,26 @@ function RiskTimeline() {
 ========================= */
 
 function RiskMapPage() {
-
   return (
-
     <>
-
       <div className="page-header">
-
         <div>
           <h1>Risk Map</h1>
-          <p>Explore real-time landslide risk across Northeast India.</p>
+          <p>
+            Real-time landslide risk monitoring across Northeast India.
+          </p>
         </div>
-
       </div>
 
-      <div className="full-map">
-
-        <RiskMap />
-
+      <div className="risk-map-panel">
+        <RealRiskMap />
       </div>
-
     </>
-
   );
 }
 
 
-/* =========================
+/* =========================Y
    ALERT PAGE
 ========================= */
 
@@ -994,30 +1009,60 @@ function AlertsPage() {
 ========================= */
 
 function SafeRoutePage() {
+  const [from, setFrom] = useState("Shillong");
+  const [to, setTo] = useState("Cherrapunji");
+  const [routeFound, setRouteFound] = useState(false);
+
+  const handleFindRoute = () => {
+    if (from.trim() && to.trim()) {
+      setRouteFound(true);
+    }
+  };
+
+  const locations = [
+    "Shillong",
+    "Cherrapunji",
+    "Guwahati",
+    "Aizawl",
+    "Kohima",
+    "Gangtok",
+    "Itanagar",
+    "Tawang",
+    "Agartala",
+  ];
 
   return (
-
     <>
-
       <div className="page-header">
-
         <div>
           <h1>Safe Route</h1>
           <p>Find a route that avoids high-risk landslide zones.</p>
         </div>
-
       </div>
-
 
       <div className="route-container">
 
+        {/* ROUTE FORM */}
         <div className="route-form panel">
 
           <label>From</label>
 
           <div className="input-location">
             <MapPin size={17} />
-            <input value="Shillong" readOnly />
+
+            <select
+              value={from}
+              onChange={(e) => {
+                setFrom(e.target.value);
+                setRouteFound(false);
+              }}
+            >
+              {locations.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
           </div>
 
 
@@ -1025,11 +1070,28 @@ function SafeRoutePage() {
 
           <div className="input-location">
             <MapPin size={17} />
-            <input value="Cherrapunji" readOnly />
+
+            <select
+              value={to}
+              onChange={(e) => {
+                setTo(e.target.value);
+                setRouteFound(false);
+              }}
+            >
+              {locations.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
           </div>
 
 
-          <button className="find-route">
+          <button
+            className="find-route"
+            onClick={handleFindRoute}
+            disabled={!from.trim() || !to.trim()}
+          >
             <Route size={18} />
             Find Safe Route
           </button>
@@ -1037,46 +1099,59 @@ function SafeRoutePage() {
         </div>
 
 
+        {/* ROUTE OPTIONS */}
         <div className="route-options">
 
           <h3>Route Options</h3>
 
-          <RouteCard
-            route="Route A"
-            time="42 min"
-            distance="24 km"
-            risk="HIGH LANDSLIDE RISK"
-          />
+          {!routeFound ? (
+            <div className="route-placeholder">
+              <MapPin size={25} />
+              <p>Enter your starting point and destination.</p>
+            </div>
+          ) : (
+            <>
+              <div className="route-found">
+                <strong>{from}</strong>
+                <span> → </span>
+                <strong>{to}</strong>
+              </div>
 
-          <RouteCard
-            route="Route B"
-            time="51 min"
-            distance="32 km"
-            risk="SAFE ROUTE"
-            safe
-          />
+              <RouteCard
+                route="Route A"
+                time="42 min"
+                distance="24 km"
+                risk="HIGH LANDSLIDE RISK"
+              />
 
-          <div className="safe-message">
+              <RouteCard
+                route="Route B"
+                time="51 min"
+                distance="32 km"
+                risk="SAFE ROUTE"
+                safe
+              />
 
-            <ShieldCheck size={20} />
+              <div className="safe-message">
 
-            <span>
-              Route B avoids high-risk zones and
-              landslide-prone areas based on real-time
-              data and terrain analysis.
-            </span>
+                <ShieldCheck size={20} />
 
-          </div>
+                <span>
+                  Route B avoids high-risk zones and
+                  landslide-prone areas based on real-time
+                  data and terrain analysis.
+                </span>
+
+              </div>
+            </>
+          )}
 
         </div>
 
       </div>
-
     </>
-
   );
 }
-
 
 function RouteCard({
   route,
@@ -1114,14 +1189,61 @@ function RouteCard({
   );
 }
 
+function RealRiskMap() {
+  return (
+    <MapContainer
+      center={[25.467, 91.366]}
+      zoom={7}
+      className="real-risk-map"
+    >
+      <TileLayer
+        attribution='&copy; OpenStreetMap contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+
+      <Marker position={[25.467, 91.366]}>
+        <Popup>
+          <strong>Sohra, Meghalaya</strong>
+          <br />
+          Landslide Risk: HIGH
+        </Popup>
+      </Marker>
+
+      <Marker position={[26.1445, 91.7362]}>
+        <Popup>
+          <strong>Guwahati, Assam</strong>
+          <br />
+          Landslide Risk: LOW
+        </Popup>
+      </Marker>
+
+    </MapContainer>
+  );
+}
+
 
 /* =========================
    REPORT PAGE
 ========================= */
 
-function ReportPage() {
+function ReportPage({ selectedState, selectedDistrict }) {
 
   const [selected, setSelected] = useState("Road blocked");
+  const [photo, setPhoto] = useState(null);
+
+    const handlePhotoUpload = (e) => {
+      const file = e.target.files[0];
+
+      if (!file) return;
+
+      // Only allow images
+      if (!file.type.startsWith("image/")) {
+        alert("Please select an image file.");
+        return;
+      }
+
+      setPhoto(file);
+    };
 
   const options = [
     "Fallen rocks",
@@ -1147,16 +1269,29 @@ function ReportPage() {
 
       <div className="report-panel panel">
 
-        <div className="detected-location">
+        <div className="report-location">
 
-          <MapPin size={19} />
+        <label>Location</label>
 
-          <div>
-            <strong>Location automatically detected</strong>
-            <span>Sohra, East Khasi Hills, Meghalaya</span>
-          </div>
+        <div className="input-location">
+          <MapPin size={17} />
 
+          <input
+            type="text"
+            value={`${selectedDistrict}, ${selectedState}`}
+            readOnly
+          />
+
+          <span className="location-auto">
+            Auto
+          </span>
         </div>
+
+        <p className="location-help">
+          Location automatically selected from your dashboard location.
+        </p>
+
+      </div>
 
 
         <div className="report-grid">
@@ -1188,25 +1323,65 @@ function ReportPage() {
           </div>
 
 
-          <div>
+          <div className="photo-upload-section">
 
-            <h3>Upload Photo</h3>
+              <label className="report-label">
+                Upload Photo
+              </label>
 
-            <div className="upload-box">
+              <label className="photo-upload-box">
 
-              <Upload size={30} />
+                {!photo ? (
+                  <>
+                    <Upload size={30} />
 
-              <strong>Click to upload</strong>
+                    <strong>Upload a photo</strong>
 
-              <span>or drag and drop</span>
+                    <span>
+                      Click here to select an image
+                    </span>
 
-              <small>JPG, PNG · Max 5MB</small>
+                    <small>
+                      JPG, PNG or WEBP
+                    </small>
+                  </>
+                ) : (
+                  <div className="photo-preview">
+
+                    <img
+                      src={URL.createObjectURL(photo)}
+                      alt="Landslide preview"
+                    />
+
+                    <span className="photo-name">
+                      {photo.name}
+                    </span>
+
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  hidden
+                />
+
+              </label>
+
+              {photo && (
+                <button
+                  type="button"
+                  className="remove-photo"
+                  onClick={() => setPhoto(null)}
+                >
+                  Remove Photo
+                </button>
+              )}
 
             </div>
 
           </div>
-
-        </div>
 
 
         <div className="description">
