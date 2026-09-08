@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "leaflet/dist/leaflet.css";
 
 import {
   MapContainer,
   TileLayer,
   Marker,
-  Popup
+  Popup,
+   Polygon
 } from "react-leaflet";
 
 import {
@@ -30,10 +31,12 @@ import {
   Menu,
   X,
   Upload,
+  FileText,
   Send,
   TrendingUp,
   Info,
   Languages,
+   User,
 } from "lucide-react";
 
 import "./App.css";
@@ -158,6 +161,18 @@ function App() {
   const [language, setLanguage] = useState("EN");
   const [selectedDistrict, setSelectedDistrict] = useState("Sohra");
   const [selectedState, setSelectedState] = useState("Meghalaya");
+
+  const [authPage, setAuthPage] = useState("login");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const [user, setUser] = useState({
+    name: "Bhavesh",
+    email: "bhavesh@example.com",
+    role: "Citizen",
+    phone: "9876543210",
+  });
+
+  const [showProfile, setShowProfile] = useState(false);
   
   const states = Object.keys(stateData);
   const districts = Object.keys(stateData[selectedState].districts);
@@ -175,7 +190,52 @@ function App() {
     { name: "Alerts", icon: <Bell size={19} /> },
     { name: "Safe Route", icon: <Route size={19} /> },
     { name: "Report Landslide", icon: <Camera size={19} /> },
+    
   ];
+
+  //notifications
+
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      type: "alert",
+      title: "High Landslide Risk",
+      message: "High landslide risk detected in Sohra, Meghalaya.",
+      time: "2 min ago",
+      read: false,
+    },
+    {
+      id: 2,
+      type: "report",
+      title: "New Landslide Report",
+      message: "A new landslide report was submitted from East Khasi Hills.",
+      time: "10 min ago",
+      read: false,
+    },
+    {
+      id: 3,
+      type: "alert",
+      title: "Weather Alert",
+      message: "Heavy rainfall may increase landslide risk.",
+      time: "25 min ago",
+      read: true,
+    },
+  ]);
+
+  if (!isLoggedIn) {
+    return authPage === "login" ? (
+      <LoginPage
+        setAuthPage={setAuthPage}
+        setIsLoggedIn={setIsLoggedIn}
+      />
+    ) : (
+      <RegisterPage
+        setAuthPage={setAuthPage}
+      />
+    );
+  }
   
 
   return (
@@ -296,19 +356,143 @@ function App() {
 
           <div className="top-actions">
 
-            <button className="notification">
+            <div
+              className="notification"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
               <Bell size={20} />
-              <span></span>
-            </button>
 
-            <div className="profile">
+              {notifications.some((n) => !n.read) && (
+                <span className="notification-dot"></span>
+              )}
+            </div>
+
+            {showNotifications && (
+              <div className="notification-dropdown">
+
+                <div className="notification-header">
+                  <div>
+                    <h3>Notifications</h3>
+                    <span>
+                      {notifications.filter((n) => !n.read).length} unread
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setNotifications(
+                        notifications.map((notification) => ({
+                          ...notification,
+                          read: true,
+                        }))
+                      );
+                    }}
+                  >
+                    Mark all read
+                  </button>
+                </div>
+
+                <div className="notification-list">
+
+                  {notifications.length === 0 ? (
+                    <div className="no-notifications">
+                      <Bell size={28} />
+                      <p>No notifications</p>
+                    </div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`notification-item ${
+                          !notification.read ? "unread" : ""
+                        }`}
+                      >
+
+                        <div className={`notification-icon ${notification.type}`}>
+                          {notification.type === "alert" ? (
+                            <AlertTriangle size={18} />
+                          ) : (
+                            <FileText size={18} />
+                          )}
+                        </div>
+
+                        <div className="notification-content">
+                          <strong>{notification.title}</strong>
+
+                          <p>{notification.message}</p>
+
+                          <small>{notification.time}</small>
+                        </div>
+
+                      </div>
+                    ))
+                  )}
+
+                </div>
+              </div>
+            )}
+
+            <div className="profile"  onClick={() => setShowProfile(!showProfile)}>
               <div className="avatar">U</div>
               <div>
                 <small>Hello,</small>
-                <strong>User</strong>
+                <strong>{user.name}</strong>
               </div>
               <ChevronDown size={15} />
             </div>
+
+            {showProfile && (
+              <div className="profile-dropdown">
+
+                <div className="profile-top">
+                  <div className="profile-avatar">
+                    <User size={25} />
+                  </div>
+
+                  <div>
+                    <h3>{user.name}</h3>
+                    <p>{user.role}</p>
+                  </div>
+                </div>
+
+                <div className="profile-info">
+
+                  <div className="profile-item">
+                    <span>Name</span>
+                    <strong>{user.name}</strong>
+                  </div>
+
+                  <div className="profile-item">
+                    <span>Email</span>
+                    <strong>{user.email}</strong>
+                  </div>
+
+                  <div className="profile-item">
+                    <span>Role</span>
+                    <strong>{user.role}</strong>
+                  </div>
+
+                  <div className="profile-item">
+                    <span>Current Location</span>
+                    <strong>
+                      {selectedDistrict}, {selectedState}
+                    </strong>
+                  </div>
+
+                </div>
+
+                <button
+                  className="logout-button"
+                  onClick={() => {
+                    setShowProfile(false);
+                    setIsLoggedIn(false);
+                  }}
+                >
+                  Logout
+                </button>
+
+              </div>
+            )}
 
           </div>
 
@@ -337,6 +521,205 @@ function App() {
 
       </main>
 
+    </div>
+  );
+}
+
+//registration page
+
+function RegisterPage({ setAuthPage }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "Citizen",
+    phone: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+
+    console.log("Registration Data:", formData);
+
+    alert("Registration successful! Please login.");
+
+    setAuthPage("login");
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1>Create Account</h1>
+          <p>Register to access NER Landslide Watch</p>
+        </div>
+
+        <form onSubmit={handleRegister}>
+
+          <div className="auth-field">
+            <label>Full Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Enter your name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="auth-field">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="auth-field">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Create a password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="auth-field">
+            <label>Role</label>
+
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+            >
+              <option value="Citizen">Citizen</option>
+              <option value="Student">Student</option>
+              <option value="Government">Government Official</option>
+              <option value="Disaster Management">Disaster Management</option>
+              <option value="Researcher">Researcher</option>
+            </select>
+          </div>
+
+          <div className="auth-field">
+            <label>Phone Number</label>
+            <input
+              type="tel"
+              name="phone"
+              placeholder="Enter phone number"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <button type="submit" className="auth-button">
+            Create Account
+          </button>
+
+        </form>
+
+        <div className="auth-switch">
+          Already have an account?
+
+          <button
+            type="button"
+            onClick={() => setAuthPage("login")}
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+//login page
+
+function LoginPage({ setAuthPage, setIsLoggedIn }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    console.log("Login:", {
+      email,
+      password,
+    });
+
+    // Temporary frontend login
+    // Later this will connect to our backend API.
+    setIsLoggedIn(true);
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-card">
+
+        <div className="auth-header">
+          <h1>Welcome Back 👋</h1>
+          <p>Login to NER Landslide Watch</p>
+        </div>
+
+        <form onSubmit={handleLogin}>
+
+          <div className="auth-field">
+            <label>Email</label>
+
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="auth-field">
+            <label>Password</label>
+
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="auth-button">
+            Login
+          </button>
+
+        </form>
+
+        <div className="auth-switch">
+          Don't have an account?
+
+          <button
+            type="button"
+            onClick={() => setAuthPage("register")}
+          >
+            Create Account
+          </button>
+        </div>
+
+      </div>
     </div>
   );
 }
@@ -399,7 +782,7 @@ function HomePage({
             <h2>{district.risk}</h2>
 
             <p>
-              Your location: <b>{district.name}, {district.state}</b>
+             Your location: <b>{selectedDistrict}, {selectedState}</b>
             </p>
 
           </div>
@@ -660,11 +1043,7 @@ function LiveAlerts() {
           <h3>Live Alerts</h3>
           <p>Nearby warnings</p>
         </div>
-
-        <button className="view-all">
-          View all →
-        </button>
-
+        
       </div>
 
 
@@ -1190,6 +1569,38 @@ function RouteCard({
 }
 
 function RealRiskMap() {
+
+  const [userLocation, setUserLocation] = useState(null);
+  
+
+  const dangerZones = [
+    {
+      id: 1,
+      name: "Sohra High Risk Zone",
+      risk: "HIGH",
+      coordinates: [
+        [25.480, 91.350],
+        [25.495, 91.370],
+        [25.475, 91.395],
+        [25.450, 91.385],
+        [25.440, 91.360],
+      ],
+    },
+    {
+      id: 2,
+      name: "East Khasi Hills Risk Zone",
+      risk: "HIGH",
+      coordinates: [
+        [25.550, 91.850],
+        [25.570, 91.880],
+        [25.550, 91.900],
+        [25.525, 91.880],
+      ],
+    },
+  ];
+
+  
+
   return (
     <MapContainer
       center={[25.467, 91.366]}
@@ -1201,6 +1612,25 @@ function RealRiskMap() {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
+      {dangerZones.map((zone) => (
+        <Polygon
+          key={zone.id}
+          positions={zone.coordinates}
+          pathOptions={{
+            color: "red",
+            fillColor: "red",
+            fillOpacity: 0.35,
+            weight: 2,
+          }}
+        >
+          <Popup>
+            <strong>{zone.name}</strong>
+            <br />
+            Risk Level: <b>{zone.risk}</b>
+          </Popup>
+        </Polygon>
+      ))}
+
       <Marker position={[25.467, 91.366]}>
         <Popup>
           <strong>Sohra, Meghalaya</strong>
@@ -1208,6 +1638,8 @@ function RealRiskMap() {
           Landslide Risk: HIGH
         </Popup>
       </Marker>
+
+     
 
       <Marker position={[26.1445, 91.7362]}>
         <Popup>
